@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mengen erfassen</title>
+    <title>Zahlen lesen lernen (0-10)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -49,7 +49,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 30px;
             flex-wrap: wrap;
         }
         
@@ -76,9 +76,34 @@
             min-width: 250px;
         }
         
-        select:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+        .image-mode-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .image-mode-btn {
+            padding: 12px 20px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            min-width: 150px;
+        }
+        
+        .image-mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+        
+        .image-mode-btn.selected {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            color: white;
+            border-color: #4CAF50;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
         }
         
         #instructions {
@@ -117,6 +142,7 @@
             font-size: 1.5em;
             color: #666;
             padding: 20px;
+            text-align: center;
         }
         
         #timer-display {
@@ -130,7 +156,6 @@
             font-size: 1.2em;
             font-weight: bold;
             z-index: 10;
-            display: none;
         }
         
         #tts-control {
@@ -201,6 +226,11 @@
                 width: 100%;
                 max-width: 300px;
             }
+            
+            #settings-panel {
+                flex-direction: column;
+                gap: 15px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -211,11 +241,6 @@
             #image-container {
                 height: 200px;
                 max-width: 300px;
-            }
-            
-            #settings-panel {
-                flex-direction: column;
-                align-items: center;
             }
             
             select {
@@ -379,6 +404,12 @@
             100% { transform: scale(1); }
         }
         
+        @keyframes countdown {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
         /* Höhe anpassen für Querformat */
         @media (orientation: landscape) and (max-height: 600px) {
             #image-container {
@@ -438,24 +469,31 @@
         
         <div id="settings-panel">
             <div class="settings-group">
-                <div class="settings-label">TTS Stimme auswählen:</div>
+                <div class="settings-label">TTS Stimme:</div>
                 <select id="voice-select">
                     <option value="">Stimme wird geladen...</option>
                 </select>
             </div>
+            <div class="settings-group">
+                <div class="settings-label">Bild-Anzeige:</div>
+                <div class="image-mode-options">
+                    <div class="image-mode-btn selected" data-mode="permanent">Immer sichtbar</div>
+                    <div class="image-mode-btn" data-mode="timer">5 Sekunden</div>
+                </div>
+            </div>
         </div>
         
         <div id="instructions">
-            Klicke auf das Bild, um die Zahl vorgelesen zu bekommen, dann wähle die richtige Zahl!
+            Drücke "Zahl vorlesen", merke dir die Zahl und wähle dann die richtige aus!
         </div>
         
         <div id="game-screen">
             <div id="image-container">
-                <div id="timer-display"></div>
+                <div id="timer-display">5s</div>
                 <img id="number-image" class="hidden" alt="Zahlwort als Bild">
                 <div id="image-loader" class="image-placeholder">
                     <div style="font-size: 1.5em; margin-bottom: 20px;">👁️</div>
-                    <div>Klicke auf "Zahl vorlesen"</div>
+                    <div>Bereit für Frage ${currentQuestion}</div>
                 </div>
             </div>
             
@@ -527,22 +565,9 @@
             { word: "zehn", value: 10, image: "images/zehn.png" }
         ];
 
-        // Audio-Feedback-Sätze
-        const positiveFeedback = [
-            "Gut gemacht!",
-            "Bravo!",
-            "Sehr gut!",
-            "Ausgezeichnet!",
-            "Prima!",
-            "Super!",
-            "Fantastisch!",
-            "Du machst das großartig!",
-            "Wow, richtig gut!",
-            "Toll gemacht!"
-        ];
-
         // Konfiguration
         const TOTAL_QUESTIONS = 20;
+        const TIMER_DURATION = 5; // Sekunden für Timer-Modus
         
         // Zustandsvariablen
         let currentNumber = null;
@@ -556,12 +581,15 @@
         let availableVoices = [];
         let selectedVoice = null;
         let nextQuestionTimer = null;
+        let imageTimer = null;
+        let imageMode = "permanent"; // "permanent" oder "timer"
 
         // DOM-Elemente
         const gameScreen = document.getElementById('game-screen');
         const resultScreen = document.getElementById('result-screen');
         const numberImage = document.getElementById('number-image');
         const imageLoader = document.getElementById('image-loader');
+        const timerDisplay = document.getElementById('timer-display');
         const answerButtons = document.getElementById('answer-buttons');
         const feedback = document.getElementById('feedback');
         const correctCount = document.getElementById('correct-count');
@@ -573,6 +601,7 @@
         const speakBtn = document.getElementById('speak-btn');
         const repeatBtn = document.getElementById('repeat-btn');
         const voiceSelect = document.getElementById('voice-select');
+        const imageModeButtons = document.querySelectorAll('.image-mode-btn');
         const finalCorrect = document.getElementById('final-correct');
         const finalPercentage = document.getElementById('final-percentage');
         const resultMessage = document.getElementById('result-message');
@@ -682,7 +711,7 @@
         }
 
         // Text vorlesen
-        function speakText(text, callback) {
+        function speakText(text) {
             if (!speechSynth || !selectedVoice || isSpeaking) return;
             
             // Aktuelle Sprachausgabe stoppen
@@ -690,7 +719,7 @@
             
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'de-DE';
-            utterance.rate = 0.9; // Etwas langsamer für bessere Verständlichkeit
+            utterance.rate = 0.9;
             utterance.pitch = 1;
             utterance.volume = 1;
             utterance.voice = selectedVoice;
@@ -704,14 +733,22 @@
                 isSpeaking = false;
                 speakBtn.classList.remove('speaking');
                 repeatBtn.classList.remove('speaking');
-                if (callback) callback();
+                
+                // Wenn Timer-Modus aktiv ist, starte den Timer
+                if (imageMode === 'timer' && !answered) {
+                    startImageTimer();
+                }
             };
             
             utterance.onerror = () => {
                 isSpeaking = false;
                 speakBtn.classList.remove('speaking');
                 repeatBtn.classList.remove('speaking');
-                if (callback) callback();
+                
+                // Wenn Timer-Modus aktiv ist, starte den Timer
+                if (imageMode === 'timer' && !answered) {
+                    startImageTimer();
+                }
             };
             
             speechSynth.speak(utterance);
@@ -736,8 +773,11 @@
             // Bild laden und anzeigen
             await loadNumberImage();
             
+            // Timer Display aktualisieren
+            timerDisplay.textContent = `${TIMER_DURATION}s`;
+            
             // Anleitung aktualisieren
-            instructions.textContent = `Frage ${currentQuestion}/${TOTAL_QUESTIONS}: Welche Zahl siehst du?`;
+            instructions.textContent = `Frage ${currentQuestion}/${TOTAL_QUESTIONS}: Drücke "Zahl vorlesen"`;
             
             updateDisplay();
         }
@@ -748,7 +788,10 @@
                 // Zeige Lade-Indikator
                 numberImage.classList.add('hidden');
                 imageLoader.classList.remove('hidden');
-                imageLoader.textContent = 'Bild wird geladen...';
+                imageLoader.innerHTML = `
+                    <div style="font-size: 1.5em; margin-bottom: 20px;">👁️</div>
+                    <div>Bereit für Frage ${currentQuestion}</div>
+                `;
                 
                 // Prüfe ob Bild existiert
                 const img = new Image();
@@ -777,6 +820,14 @@
                 numberImage.alt = `Bild zeigt: ${currentNumber.word}`;
                 numberImage.classList.remove('hidden');
                 
+                // Timer-UI je nach Modus anzeigen/verstecken
+                if (imageMode === 'timer') {
+                    timerDisplay.style.display = 'block';
+                    timerDisplay.textContent = `${TIMER_DURATION}s`;
+                } else {
+                    timerDisplay.style.display = 'none';
+                }
+                
             } catch (error) {
                 console.error('Fehler beim Laden des Bildes:', error);
                 imageLoader.innerHTML = `
@@ -789,8 +840,59 @@
             }
         }
 
+        // Bild-Timer starten
+        function startImageTimer() {
+            if (imageTimer) {
+                clearInterval(imageTimer);
+            }
+            
+            let timeLeft = TIMER_DURATION;
+            timerDisplay.textContent = `${timeLeft}s`;
+            timerDisplay.style.display = 'block';
+            
+            imageTimer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `${timeLeft}s`;
+                
+                // Timer-Animation
+                timerDisplay.style.animation = 'none';
+                setTimeout(() => {
+                    timerDisplay.style.animation = 'countdown 1s';
+                }, 10);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(imageTimer);
+                    hideImage();
+                }
+            }, 1000);
+        }
+
+        // Bild ausblenden (nur im Timer-Modus)
+        function hideImage() {
+            if (imageMode === 'timer' && !answered) {
+                numberImage.classList.add('hidden');
+                imageLoader.classList.remove('hidden');
+                imageLoader.innerHTML = `
+                    <div style="font-size: 1.5em; margin-bottom: 20px;">❓</div>
+                    <div>Welche Zahl war das?</div>
+                `;
+                timerDisplay.style.display = 'none';
+            }
+        }
+
         // Frage-UI zurücksetzen
         function resetQuestionUI() {
+            // Timer stoppen
+            if (imageTimer) {
+                clearInterval(imageTimer);
+                imageTimer = null;
+            }
+            
+            if (nextQuestionTimer) {
+                clearTimeout(nextQuestionTimer);
+                nextQuestionTimer = null;
+            }
+            
             // Reset Buttons
             const allButtons = document.querySelectorAll('.number-btn');
             allButtons.forEach(btn => {
@@ -801,12 +903,6 @@
             // Reset Feedback
             feedback.textContent = '';
             feedback.className = '';
-            
-            // Timer zurücksetzen
-            if (nextQuestionTimer) {
-                clearTimeout(nextQuestionTimer);
-                nextQuestionTimer = null;
-            }
             
             // TTS-Buttons aktivieren
             speakBtn.disabled = false;
@@ -884,36 +980,36 @@
             speakBtn.disabled = true;
             repeatBtn.disabled = true;
             
+            // Timer stoppen
+            if (imageTimer) {
+                clearInterval(imageTimer);
+                imageTimer = null;
+            }
+            
+            // Immer sichtbar-Modus: Bild wieder anzeigen falls versteckt
+            if (imageMode === 'permanent') {
+                numberImage.classList.remove('hidden');
+                imageLoader.classList.add('hidden');
+                timerDisplay.style.display = 'none';
+            }
+            
             if (selectedValue === currentNumber.value) {
                 scoreCorrect++;
-                
-                // Zufälliges positives Feedback auswählen
-                const randomFeedback = positiveFeedback[Math.floor(Math.random() * positiveFeedback.length)];
-                feedback.textContent = "✓ " + randomFeedback;
+                feedback.textContent = "✓ Richtig!";
                 feedback.className = "feedback-correct";
-                
-                // Audio-Feedback geben
-                speakText(randomFeedback, () => {
-                    // Nach 1 Sekunde zur nächsten Frage wechseln
-                    nextQuestionTimer = setTimeout(() => {
-                        currentQuestion++;
-                        loadQuestion();
-                    }, 1000);
-                });
-                
             } else {
                 scoreIncorrect++;
-                feedback.textContent = `✗ Leider falsch. Es ist ${currentNumber.value}`;
+                feedback.textContent = `✗ Falsch! Es ist ${currentNumber.value}`;
                 feedback.className = "feedback-incorrect";
-                
-                // Nach 2 Sekunden zur nächsten Frage wechseln (ohne Audio-Feedback bei falscher Antwort)
-                nextQuestionTimer = setTimeout(() => {
-                    currentQuestion++;
-                    loadQuestion();
-                }, 2000);
             }
             
             updateDisplay();
+            
+            // Nach 1 Sekunde zur nächsten Frage wechseln
+            nextQuestionTimer = setTimeout(() => {
+                currentQuestion++;
+                loadQuestion();
+            }, 1000);
         }
 
         // Ergebnisse anzeigen
@@ -926,19 +1022,19 @@
             let message = "";
             
             if (percentage === 100) {
-                message = "Perfekt! Alle 20 Zahlen richtig erkannt! 🎯";
+                message = "Perfekt! Alle 20 Zahlen richtig erkannt!";
             } else if (percentage >= 90) {
-                message = "Ausgezeichnet! Fast alle Zahlen richtig! 👍";
+                message = "Ausgezeichnet! Fast alle Zahlen richtig!";
             } else if (percentage >= 80) {
-                message = "Sehr gut! Die meisten Zahlen kennst du schon! 💪";
+                message = "Sehr gut! Die meisten Zahlen kennst du schon!";
             } else if (percentage >= 70) {
-                message = "Gut gemacht! Weiter so! ✨";
+                message = "Gut gemacht! Weiter so!";
             } else if (percentage >= 60) {
-                message = "Nicht schlecht! Übe weiter, dann klappt's noch besser! 📚";
+                message = "Nicht schlecht! Übe weiter!";
             } else if (percentage >= 50) {
-                message = "Die Hälfte geschafft! Mit etwas Übung wirst du noch besser! 🌟";
+                message = "Die Hälfte geschafft! Übe weiter!";
             } else {
-                message = "Übe weiter! Konzentriere dich besonders auf die schwierigen Zahlen! 🧠";
+                message = "Übe weiter! Du schaffst das!";
             }
             
             resultMessage.innerHTML = message;
@@ -963,6 +1059,11 @@
             }
             
             // Timer stoppen
+            if (imageTimer) {
+                clearInterval(imageTimer);
+                imageTimer = null;
+            }
+            
             if (nextQuestionTimer) {
                 clearTimeout(nextQuestionTimer);
                 nextQuestionTimer = null;
@@ -986,6 +1087,22 @@
                     if (!isNaN(voiceIndex) && voiceIndex >= 0 && voiceIndex < availableVoices.length) {
                         selectedVoice = availableVoices[voiceIndex];
                     }
+                });
+                
+                // Bild-Modus Buttons
+                imageModeButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        imageModeButtons.forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        imageMode = btn.dataset.mode;
+                        
+                        // Timer-UI aktualisieren
+                        if (imageMode === 'timer') {
+                            timerDisplay.style.display = 'block';
+                        } else {
+                            timerDisplay.style.display = 'none';
+                        }
+                    });
                 });
                 
                 // TTS-Buttons
