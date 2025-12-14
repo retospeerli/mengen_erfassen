@@ -52,52 +52,58 @@
             position: relative;
             margin: 25px auto;
             max-width: 400px;
-            height: 200px;
-            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            height: 280px;
+            background: white;
             border-radius: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            border: 3px solid #4CAF50;
+            border: 4px solid #4CAF50;
         }
         
         #number-image {
-            max-width: 90%;
-            max-height: 90%;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
-            transition: transform 0.3s ease;
+            display: block;
         }
         
-        #tts-controls {
-            margin: 20px 0;
+        .image-placeholder {
+            font-size: 1.5em;
+            color: #666;
+            padding: 20px;
+        }
+        
+        #tts-control {
+            margin: 20px 0 30px 0;
             display: flex;
             justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
         }
         
         .tts-btn {
             font-size: 1.2em;
-            padding: 15px 25px;
-            background: linear-gradient(145deg, #4CAF50, #45a049);
+            padding: 15px 35px;
+            background: linear-gradient(145deg, #2196F3, #1976D2);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
             display: flex;
             align-items: center;
-            gap: 10px;
-            min-width: 200px;
+            gap: 12px;
+            min-width: 220px;
             justify-content: center;
         }
         
         .tts-btn:hover, .tts-btn:active {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.6);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.6);
         }
         
         .tts-btn:disabled {
@@ -107,36 +113,62 @@
             transform: none;
         }
         
+        .tts-btn.speaking {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            animation: pulse 1s infinite;
+        }
+        
         #answer-buttons {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
             margin: 25px 0;
-            padding: 0 10px;
+            padding: 0 5px;
         }
         
         @media (max-width: 768px) {
             #answer-buttons {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            #image-container {
+                height: 240px;
+                max-width: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #answer-buttons {
                 grid-template-columns: repeat(3, 1fr);
+            }
+            
+            #image-container {
+                height: 200px;
+                max-width: 300px;
             }
         }
         
         .number-btn {
             font-size: 1.8em;
-            padding: 25px 5px;
-            background: linear-gradient(145deg, #2196F3, #1976D2);
+            padding: 20px 5px;
+            background: linear-gradient(145deg, #4CAF50, #45a049);
             color: white;
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
             font-weight: bold;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .number-btn:hover, .number-btn:active {
             transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(33, 150, 243, 0.4);
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
         }
         
         .number-btn:disabled {
@@ -146,13 +178,15 @@
         }
         
         .number-btn.correct {
-            background: linear-gradient(145deg, #4CAF50, #45a049);
+            background: linear-gradient(145deg, #2E7D32, #1B5E20);
             animation: pulse 0.5s;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.5);
         }
         
         .number-btn.incorrect {
             background: linear-gradient(145deg, #f44336, #d32f2f);
             animation: shake 0.5s;
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.5);
         }
         
         #feedback-container {
@@ -226,17 +260,18 @@
             display: flex;
             justify-content: center;
             gap: 20px;
+            flex-wrap: wrap;
         }
         
         .control-btn {
-            font-size: 1.3em;
-            padding: 18px 35px;
+            font-size: 1.2em;
+            padding: 16px 30px;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s;
             font-weight: bold;
-            min-width: 200px;
+            min-width: 180px;
         }
         
         #next-btn {
@@ -271,62 +306,44 @@
         /* Animations */
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
         
         @keyframes celebrate {
             0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+            50% { transform: scale(1.1); }
             100% { transform: scale(1); }
-        }
-        
-        /* Tablet Optimierungen */
-        @media (min-width: 768px) and (max-width: 1024px) {
-            #container {
-                padding: 30px;
-                margin: 20px;
-            }
-            
-            .number-btn {
-                font-size: 2em;
-                padding: 30px 10px;
-            }
-            
-            #image-container {
-                height: 250px;
-            }
-        }
-        
-        /* Für sehr große Tablets */
-        @media (min-width: 1025px) {
-            .number-btn {
-                font-size: 2.2em;
-                padding: 35px 10px;
-            }
-            
-            #image-container {
-                height: 280px;
-            }
         }
         
         /* Höhe anpassen für Querformat */
         @media (orientation: landscape) and (max-height: 600px) {
             #image-container {
                 height: 180px;
-                max-width: 300px;
+                max-width: 280px;
             }
             
             .number-btn {
                 padding: 15px 5px;
                 font-size: 1.6em;
+                min-height: 60px;
             }
+        }
+        
+        /* Loading-Styles */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -339,15 +356,13 @@
         </div>
         
         <div id="image-container">
-            <div id="number-image">Zahl wird geladen...</div>
+            <img id="number-image" class="hidden" alt="Zahlwort als Bild">
+            <div id="image-loader" class="image-placeholder">Bild wird geladen...</div>
         </div>
         
-        <div id="tts-controls">
-            <button id="speak-word-btn" class="tts-btn">
-                <span style="font-size: 1.4em;">🔊</span> Zahlwort vorlesen
-            </button>
-            <button id="speak-number-btn" class="tts-btn">
-                <span style="font-size: 1.4em;">🔢</span> Zahl vorlesen
+        <div id="tts-control">
+            <button id="speak-btn" class="tts-btn" disabled>
+                <span style="font-size: 1.4em;">🔊</span> Zahl vorlesen
             </button>
         </div>
         
@@ -367,7 +382,7 @@
             <div class="stat-box">
                 <span class="stat-value" id="current-question">0</span>
                 <span class="stat-label">von</span>
-                <span class="stat-value" id="total-questions">10</span>
+                <span class="stat-value" id="total-questions">11</span>
                 <span class="stat-label">Zahlen</span>
             </div>
             <div class="stat-box incorrect-stat">
@@ -385,17 +400,17 @@
     <script>
         // Zahlwörter und entsprechende Zahlen
         const numbers = [
-            { word: "null", value: 0 },
-            { word: "eins", value: 1 },
-            { word: "zwei", value: 2 },
-            { word: "drei", value: 3 },
-            { word: "vier", value: 4 },
-            { word: "fünf", value: 5 },
-            { word: "sechs", value: 6 },
-            { word: "sieben", value: 7 },
-            { word: "acht", value: 8 },
-            { word: "neun", value: 9 },
-            { word: "zehn", value: 10 }
+            { word: "null", value: 0, image: "images/null.png" },
+            { word: "eins", value: 1, image: "images/eins.png" },
+            { word: "zwei", value: 2, image: "images/zwei.png" },
+            { word: "drei", value: 3, image: "images/drei.png" },
+            { word: "vier", value: 4, image: "images/vier.png" },
+            { word: "fünf", value: 5, image: "images/fünf.png" },
+            { word: "sechs", value: 6, image: "images/sechs.png" },
+            { word: "sieben", value: 7, image: "images/sieben.png" },
+            { word: "acht", value: 8, image: "images/acht.png" },
+            { word: "neun", value: 9, image: "images/neun.png" },
+            { word: "zehn", value: 10, image: "images/zehn.png" }
         ];
 
         // Zustandsvariablen
@@ -407,9 +422,11 @@
         let answered = false;
         let speechEnabled = false;
         let speechSynth = null;
+        let isSpeaking = false;
 
         // DOM-Elemente
         const numberImage = document.getElementById('number-image');
+        const imageLoader = document.getElementById('image-loader');
         const answerButtons = document.getElementById('answer-buttons');
         const feedback = document.getElementById('feedback');
         const correctCount = document.getElementById('correct-count');
@@ -418,32 +435,23 @@
         const totalQuestionsSpan = document.getElementById('total-questions');
         const nextBtn = document.getElementById('next-btn');
         const restartBtn = document.getElementById('restart-btn');
-        const speakWordBtn = document.getElementById('speak-word-btn');
-        const speakNumberBtn = document.getElementById('speak-number-btn');
+        const speakBtn = document.getElementById('speak-btn');
 
         // Initialisierung
-        function init() {
+        async function init() {
             // Prüfe ob SpeechSynthesis verfügbar ist
             if ('speechSynthesis' in window) {
                 speechSynth = window.speechSynthesis;
                 speechEnabled = true;
                 
-                // Warte auf Sprach-Engine
-                setTimeout(() => {
-                    const voices = speechSynth.getVoices();
-                    if (voices.length > 0) {
-                        speakWordBtn.disabled = false;
-                        speakNumberBtn.disabled = false;
-                    }
-                }, 500);
+                // Stimmen laden
+                await loadVoices();
             } else {
-                speakWordBtn.disabled = true;
-                speakNumberBtn.disabled = true;
-                speakWordBtn.innerHTML = '<span>🔇</span> TTS nicht verfügbar';
-                speakNumberBtn.innerHTML = '<span>🔇</span> TTS nicht verfügbar';
+                speakBtn.disabled = true;
+                speakBtn.innerHTML = '<span>🔇</span> TTS nicht verfügbar';
             }
             
-            // Zufällige Reihenfolge der Zahlen
+            // Zufällige Reihenfolge der Zahlen für den Spielablauf
             const shuffledNumbers = [...numbers].sort(() => Math.random() - 0.5);
             currentNumber = shuffledNumbers[0];
             currentQuestion = 1;
@@ -453,40 +461,94 @@
             
             updateDisplay();
             setupAnswerButtons();
-            loadNumberImage();
+            await loadNumberImage();
+        }
+
+        // Stimmen für TTS laden
+        function loadVoices() {
+            return new Promise((resolve) => {
+                const voices = speechSynth.getVoices();
+                if (voices.length > 0) {
+                    speakBtn.disabled = false;
+                    resolve();
+                } else {
+                    // Warte auf Stimmen (besonders wichtig für iOS)
+                    speechSynth.onvoiceschanged = () => {
+                        const loadedVoices = speechSynth.getVoices();
+                        if (loadedVoices.length > 0) {
+                            speakBtn.disabled = false;
+                            resolve();
+                        }
+                    };
+                    
+                    // Timeout nach 2 Sekunden
+                    setTimeout(() => {
+                        if (speakBtn.disabled) {
+                            speakBtn.innerHTML = '<span>🔇</span> Stimmen nicht verfügbar';
+                        }
+                        resolve();
+                    }, 2000);
+                }
+            });
         }
 
         // Zahlenbild laden
-        function loadNumberImage() {
-            // Platzhalter für das Bild
-            numberImage.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <div style="font-size: 4em; font-weight: bold; color: #2196F3; margin-bottom: 10px;">
-                        ${currentNumber.value}
+        async function loadNumberImage() {
+            try {
+                // Zeige Lade-Indikator
+                numberImage.classList.add('hidden');
+                imageLoader.classList.remove('hidden');
+                imageLoader.textContent = 'Bild wird geladen...';
+                
+                // Prüfe ob Bild existiert
+                const img = new Image();
+                
+                // Setze Timeout für Bild-Laden
+                const loadPromise = new Promise((resolve, reject) => {
+                    img.onload = () => {
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        reject(new Error(`Bild nicht gefunden: ${currentNumber.image}`));
+                    };
+                    
+                    // Timeout nach 5 Sekunden
+                    setTimeout(() => {
+                        reject(new Error('Timeout beim Laden des Bildes'));
+                    }, 5000);
+                });
+                
+                img.src = currentNumber.image;
+                img.alt = `Bild zeigt: ${currentNumber.word}`;
+                img.id = 'number-image';
+                img.classList.add('number-image');
+                
+                await loadPromise;
+                
+                // Ersetze Loader mit Bild
+                imageLoader.classList.add('hidden');
+                numberImage.src = currentNumber.image;
+                numberImage.alt = `Bild zeigt: ${currentNumber.word}`;
+                numberImage.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Fehler beim Laden des Bildes:', error);
+                imageLoader.innerHTML = `
+                    <div style="color: #f44336; padding: 20px;">
+                        <div style="font-size: 1.5em; margin-bottom: 10px;">⚠️ Bild nicht gefunden</div>
+                        <div style="font-size: 2em; color: #4CAF50; font-weight: bold;">${currentNumber.word}</div>
+                        <div style="font-size: 1em; color: #666; margin-top: 10px;">(${currentNumber.image})</div>
                     </div>
-                    <div style="font-size: 3em; color: #4CAF50; font-weight: bold;">
-                        ${currentNumber.word}
-                    </div>
-                    <div style="font-size: 1.2em; color: #666; margin-top: 15px;">
-                        (Bild: ${currentNumber.word}.png)
-                    </div>
-                </div>
-            `;
-            
-            // In der echten App würden Sie stattdessen verwenden:
-            // const img = document.createElement('img');
-            // img.src = `bilder/${currentNumber.word}.png`;
-            // img.alt = currentNumber.word;
-            // img.style.maxWidth = '100%';
-            // numberImage.innerHTML = '';
-            // numberImage.appendChild(img);
+                `;
+            }
         }
 
         // TTS: Zahlwort vorlesen
         function speakWord() {
-            if (!speechEnabled || !speechSynth) return;
+            if (!speechEnabled || !speechSynth || isSpeaking) return;
             
-            speechSynth.cancel(); // Aktuelle Sprachausgabe stoppen
+            // Aktuelle Sprachausgabe stoppen
+            speechSynth.cancel();
             
             const utterance = new SpeechSynthesisUtterance(currentNumber.word);
             utterance.lang = 'de-DE';
@@ -496,78 +558,64 @@
             
             // Suche nach einer deutschen Stimme
             const voices = speechSynth.getVoices();
-            const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
+            const germanVoice = voices.find(voice => 
+                voice.lang.startsWith('de') || 
+                voice.lang.startsWith('de-DE') ||
+                voice.name.toLowerCase().includes('german')
+            );
+            
             if (germanVoice) {
                 utterance.voice = germanVoice;
             }
             
-            // Visuelles Feedback
-            speakWordBtn.style.background = 'linear-gradient(145deg, #2196F3, #1976D2)';
-            setTimeout(() => {
-                speakWordBtn.style.background = 'linear-gradient(145deg, #4CAF50, #45a049)';
-            }, 300);
+            // Visuelles Feedback während der Sprachausgabe
+            isSpeaking = true;
+            speakBtn.classList.add('speaking');
+            speakBtn.disabled = true;
+            
+            utterance.onend = () => {
+                isSpeaking = false;
+                speakBtn.classList.remove('speaking');
+                speakBtn.disabled = false;
+            };
+            
+            utterance.onerror = () => {
+                isSpeaking = false;
+                speakBtn.classList.remove('speaking');
+                speakBtn.disabled = false;
+            };
             
             speechSynth.speak(utterance);
         }
 
-        // TTS: Zahl vorlesen
-        function speakNumber() {
-            if (!speechEnabled || !speechSynth) return;
-            
-            speechSynth.cancel(); // Aktuelle Sprachausgabe stoppen
-            
-            const utterance = new SpeechSynthesisUtterance(currentNumber.value.toString());
-            utterance.lang = 'de-DE';
-            utterance.rate = 0.8;
-            utterance.pitch = 1;
-            utterance.volume = 1;
-            
-            // Suche nach einer deutschen Stimme
-            const voices = speechSynth.getVoices();
-            const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
-            if (germanVoice) {
-                utterance.voice = germanVoice;
-            }
-            
-            // Visuelles Feedback
-            speakNumberBtn.style.background = 'linear-gradient(145deg, #2196F3, #1976D2)';
-            setTimeout(() => {
-                speakNumberBtn.style.background = 'linear-gradient(145deg, #4CAF50, #45a049)';
-            }, 300);
-            
-            speechSynth.speak(utterance);
-        }
-
-        // Antwort-Buttons erstellen
+        // Antwort-Buttons erstellen (aufsteigend sortiert)
         function setupAnswerButtons() {
             answerButtons.innerHTML = '';
             
-            // Erstelle Buttons für Zahlen 0-10 in zufälliger Reihenfolge
-            const buttons = [];
+            // Erstelle Buttons für Zahlen 0-10 in aufsteigender Reihenfolge
             for (let i = 0; i <= 10; i++) {
-                buttons.push({
-                    value: i,
-                    text: i.toString()
-                });
-            }
-            
-            // Mische die Buttons
-            buttons.sort(() => Math.random() - 0.5);
-            
-            // Erstelle Button-Elemente
-            buttons.forEach(button => {
                 const btn = document.createElement('button');
                 btn.className = 'number-btn';
-                btn.textContent = button.text;
-                btn.dataset.value = button.value;
+                btn.textContent = i.toString();
+                btn.dataset.value = i;
+                btn.dataset.number = i;
                 
-                btn.addEventListener('click', () => checkAnswer(parseInt(button.value)));
+                // Click-Event
+                btn.addEventListener('click', () => checkAnswer(i));
+                
+                // Touch-Optimierung
                 btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault(); // Verhindert Fokus-Stil auf Touch
+                    e.preventDefault();
+                    btn.style.transform = 'scale(0.95)';
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    btn.style.transform = '';
                 });
                 
                 answerButtons.appendChild(btn);
-            });
+            }
         }
 
         // Antwort überprüfen
@@ -581,32 +629,31 @@
             allButtons.forEach(btn => {
                 btn.disabled = true;
                 
+                const btnValue = parseInt(btn.dataset.value);
+                
                 // Richtige Antwort hervorheben
-                if (parseInt(btn.dataset.value) === currentNumber.value) {
+                if (btnValue === currentNumber.value) {
                     btn.classList.add('correct');
                 }
                 
                 // Falsche Antwort hervorheben (wenn diese ausgewählt wurde)
-                if (parseInt(btn.dataset.value) === selectedValue && selectedValue !== currentNumber.value) {
+                if (btnValue === selectedValue && selectedValue !== currentNumber.value) {
                     btn.classList.add('incorrect');
                 }
             });
             
             // Feedback anzeigen
             if (selectedValue === currentNumber.value) {
-                feedback.textContent = "🎉 Richtig! Gut gemacht!";
+                feedback.textContent = "🎉 Richtig!";
                 feedback.className = "feedback-correct";
                 scoreCorrect++;
                 
-                // Erfolgs-Ton abspielen (falls gewünscht)
+                // Erfolgston
                 playSuccessSound();
             } else {
-                feedback.textContent = `❌ Falsch! Die richtige Antwort ist ${currentNumber.value} (${currentNumber.word})`;
+                feedback.textContent = `❌ Leider falsch. Es ist ${currentNumber.value}`;
                 feedback.className = "feedback-incorrect";
                 scoreIncorrect++;
-                
-                // Hinweis-Ton (falls gewünscht)
-                playErrorSound();
             }
             
             // Score aktualisieren
@@ -617,7 +664,7 @@
             nextBtn.disabled = false;
         }
 
-        // Erfolgston (optional)
+        // Erfolgston
         function playSuccessSound() {
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -627,11 +674,11 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
-                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
                 
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
                 
                 oscillator.start(audioContext.currentTime);
@@ -641,31 +688,8 @@
             }
         }
 
-        // Fehlerton (optional)
-        function playErrorSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(349.23, audioContext.currentTime); // F4
-                oscillator.frequency.setValueAtTime(293.66, audioContext.currentTime + 0.1); // D4
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
-            } catch (e) {
-                // Audio nicht verfügbar - ignorieren
-            }
-        }
-
         // Nächste Frage
-        function nextQuestion() {
+        async function nextQuestion() {
             if (currentQuestion >= totalQuestions) {
                 // Quiz beendet
                 feedback.textContent = "🏆 Super! Du hast alle Zahlen geschafft!";
@@ -692,20 +716,26 @@
             feedback.textContent = '';
             feedback.className = '';
             
-            // Nächste-Button deaktivieren
+            // Nächste-Button und Speak-Button deaktivieren
             nextBtn.disabled = true;
+            speakBtn.disabled = !speechEnabled;
             
             updateDisplay();
-            loadNumberImage();
-            setupAnswerButtons();
+            await loadNumberImage();
         }
 
         // Neustart
-        function restartQuiz() {
-            init();
+        async function restartQuiz() {
+            // Aktuelle Sprachausgabe stoppen
+            if (speechSynth) {
+                speechSynth.cancel();
+            }
+            
+            await init();
             feedback.textContent = '';
             feedback.className = '';
             nextBtn.disabled = true;
+            speakBtn.disabled = !speechEnabled;
         }
 
         // Anzeige aktualisieren
@@ -717,48 +747,40 @@
         // Event Listener
         nextBtn.addEventListener('click', nextQuestion);
         restartBtn.addEventListener('click', restartQuiz);
-        speakWordBtn.addEventListener('click', speakWord);
-        speakNumberBtn.addEventListener('click', speakNumber);
+        speakBtn.addEventListener('click', speakWord);
         
-        // Touch-Optimierung: Verhindert Doppelklick-Zoom
+        // Touch-Optimierung
         document.addEventListener('dblclick', (e) => {
             e.preventDefault();
         }, { passive: false });
         
-        // Verhindert Kontextmenü auf Buttons
-        document.addEventListener('contextmenu', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                e.preventDefault();
-            }
+        // Verhindert Standard-Touch-Verhalten auf Buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
         });
 
         // App starten
-        document.addEventListener('DOMContentLoaded', () => {
-            init();
-            
-            // Initialisiere Sprachausgabe
-            if ('speechSynthesis' in window) {
-                // Trigger voices loaded event
-                speechSynthesis.getVoices();
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await init();
+            } catch (error) {
+                console.error('Fehler beim Initialisieren:', error);
+                feedback.textContent = '❌ Fehler beim Laden der App';
+                feedback.className = 'feedback-incorrect';
             }
         });
         
-        // Fallback für Sprachausgabe auf iOS/iPadOS
-        if ('speechSynthesis' in window) {
-            window.addEventListener('load', () => {
-                // Erzwinge das Laden der Stimmen
-                const voices = speechSynthesis.getVoices();
-                if (voices.length === 0) {
-                    setTimeout(() => {
-                        const loadedVoices = speechSynthesis.getVoices();
-                        if (loadedVoices.length > 0) {
-                            speakWordBtn.disabled = false;
-                            speakNumberBtn.disabled = false;
-                        }
-                    }, 1000);
-                }
-            });
-        }
+        // Sprachausgabe bei Bildwechsel stoppen
+        numberImage.addEventListener('load', () => {
+            if (speechSynth && isSpeaking) {
+                speechSynth.cancel();
+                speakBtn.classList.remove('speaking');
+                speakBtn.disabled = false;
+                isSpeaking = false;
+            }
+        });
     </script>
 </body>
 </html>
