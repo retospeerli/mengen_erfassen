@@ -345,6 +345,40 @@
         .hidden {
             display: none;
         }
+        
+        /* Ergebnis-Screen */
+        #result-screen {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .result-title {
+            font-size: 2.5em;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        
+        .result-stats {
+            font-size: 2em;
+            margin: 20px 0;
+            color: #333;
+        }
+        
+        .result-percentage {
+            font-size: 3em;
+            font-weight: bold;
+            color: #2196F3;
+            margin: 30px 0;
+        }
+        
+        .result-message {
+            font-size: 1.8em;
+            color: #666;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
     </style>
 </head>
 <body>
@@ -352,48 +386,62 @@
         <h1>🔢 Zahlen lesen lernen (0-10)</h1>
         
         <div id="instructions">
-            Wähle die Zahl, die auf dem Bild steht!
+            Wähle die Zahl, die auf dem Bild steht! (Alle Zahlen 0-10, dann 9 Wiederholungen)
         </div>
         
-        <div id="image-container">
-            <img id="number-image" class="hidden" alt="Zahlwort als Bild">
-            <div id="image-loader" class="image-placeholder">Bild wird geladen...</div>
+        <div id="game-screen">
+            <div id="image-container">
+                <img id="number-image" class="hidden" alt="Zahlwort als Bild">
+                <div id="image-loader" class="image-placeholder">Bild wird geladen...</div>
+            </div>
+            
+            <div id="tts-control">
+                <button id="speak-btn" class="tts-btn" disabled>
+                    <span style="font-size: 1.4em;">🔊</span> Zahl vorlesen
+                </button>
+            </div>
+            
+            <div id="answer-buttons">
+                <!-- Buttons werden durch JavaScript generiert -->
+            </div>
+            
+            <div id="feedback-container">
+                <div id="feedback"></div>
+            </div>
+            
+            <div id="stats">
+                <div class="stat-box correct-stat">
+                    <span class="stat-value" id="correct-count">0</span>
+                    <span class="stat-label">Richtig</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value" id="current-question">0</span>
+                    <span class="stat-label">von</span>
+                    <span class="stat-value" id="total-questions">20</span>
+                    <span class="stat-label">Fragen</span>
+                </div>
+                <div class="stat-box incorrect-stat">
+                    <span class="stat-value" id="incorrect-count">0</span>
+                    <span class="stat-label">Falsch</span>
+                </div>
+            </div>
+            
+            <div id="controls">
+                <button id="next-btn" class="control-btn" disabled>➡️ Nächste Frage</button>
+                <button id="restart-btn" class="control-btn">🔄 Neu starten</button>
+            </div>
         </div>
         
-        <div id="tts-control">
-            <button id="speak-btn" class="tts-btn" disabled>
-                <span style="font-size: 1.4em;">🔊</span> Zahl vorlesen
+        <div id="result-screen" class="hidden">
+            <div class="result-title">🏆 Quiz beendet! 🏆</div>
+            <div class="result-stats">
+                Richtige Antworten: <span id="final-correct">0</span> / 20
+            </div>
+            <div class="result-percentage" id="final-percentage">0%</div>
+            <div class="result-message" id="result-message"></div>
+            <button id="play-again-btn" class="control-btn" style="margin-top: 30px;">
+                🎮 Nochmal spielen
             </button>
-        </div>
-        
-        <div id="answer-buttons">
-            <!-- Buttons werden durch JavaScript generiert -->
-        </div>
-        
-        <div id="feedback-container">
-            <div id="feedback"></div>
-        </div>
-        
-        <div id="stats">
-            <div class="stat-box correct-stat">
-                <span class="stat-value" id="correct-count">0</span>
-                <span class="stat-label">Richtig</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-value" id="current-question">0</span>
-                <span class="stat-label">von</span>
-                <span class="stat-value" id="total-questions">11</span>
-                <span class="stat-label">Zahlen</span>
-            </div>
-            <div class="stat-box incorrect-stat">
-                <span class="stat-value" id="incorrect-count">0</span>
-                <span class="stat-label">Falsch</span>
-            </div>
-        </div>
-        
-        <div id="controls">
-            <button id="next-btn" class="control-btn" disabled>➡️ Nächste Zahl</button>
-            <button id="restart-btn" class="control-btn">🔄 Neu starten</button>
         </div>
     </div>
 
@@ -413,18 +461,25 @@
             { word: "zehn", value: 10, image: "images/zehn.png" }
         ];
 
+        // Konfiguration
+        const TOTAL_QUESTIONS = 20;
+        
         // Zustandsvariablen
         let currentNumber = null;
         let scoreCorrect = 0;
         let scoreIncorrect = 0;
         let currentQuestion = 0;
-        let totalQuestions = numbers.length;
         let answered = false;
         let speechEnabled = false;
         let speechSynth = null;
         let isSpeaking = false;
+        let questionQueue = [];
+        let availableNumbers = []; // Zahlen, die noch nicht abgefragt wurden
+        let usedNumbers = []; // Zahlen, die bereits abgefragt wurden
 
         // DOM-Elemente
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
         const numberImage = document.getElementById('number-image');
         const imageLoader = document.getElementById('image-loader');
         const answerButtons = document.getElementById('answer-buttons');
@@ -435,7 +490,11 @@
         const totalQuestionsSpan = document.getElementById('total-questions');
         const nextBtn = document.getElementById('next-btn');
         const restartBtn = document.getElementById('restart-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
         const speakBtn = document.getElementById('speak-btn');
+        const finalCorrect = document.getElementById('final-correct');
+        const finalPercentage = document.getElementById('final-percentage');
+        const resultMessage = document.getElementById('result-message');
 
         // Initialisierung
         async function init() {
@@ -451,17 +510,54 @@
                 speakBtn.innerHTML = '<span>🔇</span> TTS nicht verfügbar';
             }
             
-            // Zufällige Reihenfolge der Zahlen für den Spielablauf
-            const shuffledNumbers = [...numbers].sort(() => Math.random() - 0.5);
-            currentNumber = shuffledNumbers[0];
-            currentQuestion = 1;
-            
+            // Zurücksetzen der Werte
             scoreCorrect = 0;
             scoreIncorrect = 0;
+            currentQuestion = 1;
+            availableNumbers = [...numbers]; // Kopie aller Zahlen
+            usedNumbers = [];
+            questionQueue = [];
+            
+            // Frage-Queue erstellen (20 Fragen)
+            generateQuestionQueue();
+            
+            // Erste Frage laden
+            await loadNextQuestion();
+            
+            // Anzeigen des Spielscreens
+            gameScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
             
             updateDisplay();
-            setupAnswerButtons();
-            await loadNumberImage();
+        }
+
+        // Generiert eine Queue mit 20 Fragen ohne Wiederholungen in den ersten 11 Fragen
+        function generateQuestionQueue() {
+            questionQueue = [];
+            
+            // Phase 1: Alle 11 Zahlen einmal ohne Wiederholungen
+            console.log("Phase 1: Alle Zahlen einmal");
+            
+            // Erstelle eine gemischte Liste aller Zahlen
+            const shuffledAllNumbers = [...numbers].sort(() => Math.random() - 0.5);
+            
+            // Füge alle 11 gemischten Zahlen hinzu
+            for (let i = 0; i < shuffledAllNumbers.length; i++) {
+                questionQueue.push(shuffledAllNumbers[i]);
+                console.log(`Frage ${i+1}: ${shuffledAllNumbers[i].word}`);
+            }
+            
+            // Phase 2: 9 weitere zufällige Fragen (Wiederholungen erlaubt)
+            console.log("Phase 2: 9 Wiederholungen");
+            
+            for (let i = 0; i < 9; i++) {
+                // Wähle eine zufällige Zahl aus allen Zahlen
+                const randomIndex = Math.floor(Math.random() * numbers.length);
+                questionQueue.push(numbers[randomIndex]);
+                console.log(`Frage ${11+i+1}: ${numbers[randomIndex].word} (Wiederholung)`);
+            }
+            
+            console.log("Gesamte Frage-Queue:", questionQueue.map((q, i) => `${i+1}: ${q.word}`));
         }
 
         // Stimmen für TTS laden
@@ -490,6 +586,42 @@
                     }, 2000);
                 }
             });
+        }
+
+        // Nächste Frage laden
+        async function loadNextQuestion() {
+            if (currentQuestion > TOTAL_QUESTIONS) {
+                // Quiz beendet - Ergebnisse anzeigen
+                showResults();
+                return;
+            }
+            
+            answered = false;
+            
+            // Aktuelle Zahl aus der Queue holen (Index ist currentQuestion-1)
+            currentNumber = questionQueue[currentQuestion - 1];
+            
+            console.log(`Frage ${currentQuestion}/${TOTAL_QUESTIONS}: ${currentNumber.word}`);
+            
+            // Reset Buttons
+            const allButtons = document.querySelectorAll('.number-btn');
+            allButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.className = 'number-btn';
+            });
+            
+            // Reset Feedback
+            feedback.textContent = '';
+            feedback.className = '';
+            
+            // Buttons und TTS deaktivieren
+            nextBtn.disabled = true;
+            speakBtn.disabled = !speechEnabled || isSpeaking;
+            
+            // Bild laden
+            await loadNumberImage();
+            
+            updateDisplay();
         }
 
         // Zahlenbild laden
@@ -576,13 +708,13 @@
             utterance.onend = () => {
                 isSpeaking = false;
                 speakBtn.classList.remove('speaking');
-                speakBtn.disabled = false;
+                speakBtn.disabled = !speechEnabled;
             };
             
             utterance.onerror = () => {
                 isSpeaking = false;
                 speakBtn.classList.remove('speaking');
-                speakBtn.disabled = false;
+                speakBtn.disabled = !speechEnabled;
             };
             
             speechSynth.speak(utterance);
@@ -664,6 +796,56 @@
             nextBtn.disabled = false;
         }
 
+        // Nächste Frage (Button-Handler)
+        async function nextQuestion() {
+            currentQuestion++;
+            await loadNextQuestion();
+        }
+
+        // Ergebnisse anzeigen
+        function showResults() {
+            const percentage = Math.round((scoreCorrect / TOTAL_QUESTIONS) * 100);
+            
+            finalCorrect.textContent = scoreCorrect;
+            finalPercentage.textContent = `${percentage}%`;
+            
+            // Nachricht basierend auf der Leistung
+            let message = "";
+            
+            // Zähle, welche Zahlen richtig/wrong beantwortet wurden
+            const correctNumbers = [];
+            const incorrectNumbers = [];
+            
+            // Diese Analyse wäre komplexer in der Umsetzung,
+            // da wir den Verlauf der Antworten nicht speichern.
+            // Für jetzt verwenden wir eine einfache Nachricht.
+            
+            if (percentage === 100) {
+                message = "Perfekt! Alle 20 Zahlen richtig erkannt! 🎯";
+            } else if (percentage >= 90) {
+                message = "Ausgezeichnet! Fast alle Zahlen richtig! 👍";
+            } else if (percentage >= 80) {
+                message = "Sehr gut! Die meisten Zahlen kennst du schon! 💪";
+            } else if (percentage >= 70) {
+                message = "Gut gemacht! Weiter so! ✨";
+            } else if (percentage >= 60) {
+                message = "Nicht schlecht! Übe weiter, dann klappt's noch besser! 📚";
+            } else if (percentage >= 50) {
+                message = "Die Hälfte geschafft! Mit etwas Übung wirst du noch besser! 🌟";
+            } else {
+                message = "Übe weiter! Konzentriere dich besonders auf die schwierigen Zahlen! 🧠";
+            }
+            
+            // Füge einen Hinweis zur Struktur hinzu
+            message += "\n\n(Die ersten 11 Fragen: alle Zahlen 0-10 einmal\nDie letzten 9 Fragen: Wiederholungen zur Festigung)";
+            
+            resultMessage.innerHTML = message.replace(/\n/g, '<br>');
+            
+            // Wechsel zum Ergebnis-Screen
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        }
+
         // Erfolgston
         function playSuccessSound() {
             try {
@@ -688,42 +870,6 @@
             }
         }
 
-        // Nächste Frage
-        async function nextQuestion() {
-            if (currentQuestion >= totalQuestions) {
-                // Quiz beendet
-                feedback.textContent = "🏆 Super! Du hast alle Zahlen geschafft!";
-                feedback.className = "feedback-correct";
-                nextBtn.disabled = true;
-                return;
-            }
-            
-            // Zur nächsten Zahl in der zufälligen Reihenfolge wechseln
-            const shuffledNumbers = [...numbers].sort(() => Math.random() - 0.5);
-            currentNumber = shuffledNumbers[currentQuestion];
-            currentQuestion++;
-            
-            answered = false;
-            
-            // Reset Buttons
-            const allButtons = document.querySelectorAll('.number-btn');
-            allButtons.forEach(btn => {
-                btn.disabled = false;
-                btn.className = 'number-btn';
-            });
-            
-            // Reset Feedback
-            feedback.textContent = '';
-            feedback.className = '';
-            
-            // Nächste-Button und Speak-Button deaktivieren
-            nextBtn.disabled = true;
-            speakBtn.disabled = !speechEnabled;
-            
-            updateDisplay();
-            await loadNumberImage();
-        }
-
         // Neustart
         async function restartQuiz() {
             // Aktuelle Sprachausgabe stoppen
@@ -732,21 +878,20 @@
             }
             
             await init();
-            feedback.textContent = '';
-            feedback.className = '';
-            nextBtn.disabled = true;
-            speakBtn.disabled = !speechEnabled;
         }
 
         // Anzeige aktualisieren
         function updateDisplay() {
             currentQuestionSpan.textContent = currentQuestion;
-            totalQuestionsSpan.textContent = totalQuestions;
+            totalQuestionsSpan.textContent = TOTAL_QUESTIONS;
+            correctCount.textContent = scoreCorrect;
+            incorrectCount.textContent = scoreIncorrect;
         }
 
         // Event Listener
         nextBtn.addEventListener('click', nextQuestion);
         restartBtn.addEventListener('click', restartQuiz);
+        playAgainBtn.addEventListener('click', restartQuiz);
         speakBtn.addEventListener('click', speakWord);
         
         // Touch-Optimierung
@@ -764,6 +909,10 @@
         // App starten
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Antwort-Buttons einmalig erstellen
+                setupAnswerButtons();
+                
+                // Spiel initialisieren
                 await init();
             } catch (error) {
                 console.error('Fehler beim Initialisieren:', error);
@@ -777,7 +926,7 @@
             if (speechSynth && isSpeaking) {
                 speechSynth.cancel();
                 speakBtn.classList.remove('speaking');
-                speakBtn.disabled = false;
+                speakBtn.disabled = !speechEnabled;
                 isSpeaking = false;
             }
         });
